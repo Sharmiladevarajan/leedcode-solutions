@@ -21,12 +21,18 @@ jobs:
       - name: Install LeetCode CLI
         run: npm install -g leetcode-cli
 
-      - name: Export Solutions
+      - name: Setup LeetCode Session
+        run: |
+          mkdir -p ~/.leetcode
+          echo "{\"cookie\":\"LEETCODE_SESSION=$LEETCODE_SESSION\"}" > ~/.leetcode/leetcode.json
         env:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+
+      - name: Export Solutions
         run: |
           mkdir raw_solutions
           leetcode export -o raw_solutions
+
 
       - name: Organize by Difficulty
         run: |
