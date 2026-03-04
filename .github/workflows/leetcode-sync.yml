@@ -1,0 +1,52 @@
+name: Sync LeetCode Solutions
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Daily at 3 AM UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install LeetCode CLI
+        run: npm install -g leetcode-cli
+
+      - name: Export Solutions
+        env:
+          LEETCODE_SESSION: ${{ secrets.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfYXV0aF91c2VyX2lkIjoiMzgyMzI5NiIsIl9hdXRoX3VzZXJfYmFja2VuZCI6ImFsbGF1dGguYWNjb3VudC5hdXRoX2JhY2tlbmRzLkF1dGhlbnRpY2F0aW9uQmFja2VuZCIsIl9hdXRoX3VzZXJfaGFzaCI6ImRlZmUwMThhNGIzNmU1OGIwOGQ2M2EyMGE3ZmQyNDYzN2ExYzE3ODFmN2QxNGJkY2RmZDg4NDljOTEzMTI0YjIiLCJzZXNzaW9uX3V1aWQiOiI3MTg1ZTgxMCIsImlkIjozODIzMjk2LCJlbWFpbCI6ImRldmFyYWpzaGFybWlsYTM2QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiU2hhcm1pbGFfZGV2YXJhamFuIiwidXNlcl9zbHVnIjoiU2hhcm1pbGFfZGV2YXJhamFuIiwiYXZhdGFyIjoiaHR0cHM6Ly9hc3NldHMubGVldGNvZGUuY29tL3VzZXJzL2RlZmF1bHRfYXZhdGFyLmpwZyIsInJlZnJlc2hlZF9hdCI6MTc3MjY0NDQxNSwiaXAiOiIyNDA5OjQwZjQ6MzExNzo1OTM6Y2Q0YTpiNWM2OjQyNjc6Zjk5MiIsImlkZW50aXR5IjoiN2M3M2VmNWI4ZDMyMzVhZTA2MDZmMmU4NGU0NTdmZjUiLCJkZXZpY2Vfd2l0aF9pcCI6WyI5ODAwY2MxZmY0NTFlNDAzMDVlZjk2YTNhMTJjZTM4OSIsIjI0MDk6NDBmNDozMTE3OjU5MzpjZDRhOmI1YzY6NDI2NzpmOTkyIl0sIl9zZXNzaW9uX2V4cGlyeSI6MTIwOTYwMH0.HESUsmXNMhCV4f6ZJlFwQnqKtffF5gHdEJ50HQ75g14 }}
+        run: |
+          mkdir raw_solutions
+          leetcode export -o raw_solutions
+
+      - name: Organize by Difficulty
+        run: |
+          mkdir -p Easy Medium Hard
+          
+          for file in raw_solutions/*; do
+            if grep -q "Easy" "$file"; then
+              mv "$file" Easy/
+            elif grep -q "Medium" "$file"; then
+              mv "$file" Medium/
+            elif grep -q "Hard" "$file"; then
+              mv "$file" Hard/
+            fi
+          done
+          
+          rm -rf raw_solutions
+
+      - name: Commit & Push
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "Auto-update LeetCode solutions" || echo "No changes"
+          git push
